@@ -1,0 +1,411 @@
+$action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPlugin"
+
+#if (${hasErrorMessages})
+	#foreach ($error in $action.getErrorMessages())
+		#if("NOT_LOGGED_IN" == $error)
+			$action.doRedirect()
+		#end
+	#end
+#end
+<html>
+    <head>
+        <title>${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.title")}</title>
+        <meta content="admin" name="decorator" />
+        <script>
+        function getDiv(id){
+			return document.getElementById(id);
+	    }
+       	function doShow(num){
+			hide("visu-project-"+num);
+			hide("visu-field-"+num);
+			hide("visu-operator-"+num);
+			hide("visu-valuetocompare-"+num);
+			hide("visu-fieldtoupdate-"+num);
+			hide("visu-updatedfieldvalue-"+num);
+			show("conf-project-"+num);
+			show("conf-field-"+num);
+			show("conf-operator-"+num);
+			show("conf-valuetocompare-"+num);
+			show("conf-fieldtoupdate-"+num);
+			show("conf-updatedfieldvalue-"+num);
+			show("conf-actiontodo-"+num);									
+		}
+		function hide(id){
+			var toHide=getDiv(id);
+			if(toHide) toHide.style.display = 'none';
+		}
+		function show(id){
+			var toShow=getDiv(id);
+			if(toShow) toShow.style.display = 'inline';
+		}
+		function showTr(id){
+			var toShow=getDiv(id);
+			if(toShow) toShow.style.display = 'table-row';
+		}
+		function doDelete(num){
+			var confirmer = "${i18n.getText("com.atosworldline.jira.plugins.valuesync.webwork.label.confirmer")}";
+			var valide = confirm(confirmer);
+			if (!valide){
+				return;
+			}
+			hide("tr1-"+num);
+			hide("tr2-"+num);
+			hide("tr3-"+num);
+			hide("tr4-"+num);
+			hide("tr5-"+num);
+			hide("tr6-"+num);
+			hide("tr7-"+num);
+			hide("tr8-"+num);
+			hide("tr9-"+num);
+			var select = getDiv("delete-select");
+			var size = select.length;
+			select.options[size] = new Option(num, num, false, false);
+			for(k=0; k<select.length; k++)
+   				select.options[k].selected=true;
+		}
+		function doAdd(){
+			hide("tr-add-button");
+			showTr("tr-conf-project");
+			showTr("tr-conf-field");
+			showTr("tr-conf-operator");
+			showTr("tr-conf-valuetocompare");
+			showTr("tr-conf-fieldtoupdate");
+			showTr("tr-conf-updatedfieldvalue");		
+			showTr("tr-conf-actiontodo");
+		}
+		</script>
+		<style>
+		.invisible{
+			display:none;
+		}
+		</style>
+    </head>
+    
+    
+    ## ------------------------ ##
+	## -- MESSAGES D'ERREURS -- ##
+	## ------------------------ ##
+    
+	#if (${hasErrorMessages})
+  	<body>
+		<br/>
+
+    <table align="center" bgcolor="#bbbbbb" border="0" cellpadding="0" cellspacing="0" width="100%">
+		<tr>
+			<td>
+				<table border="0" cellpadding="3" cellspacing="1" width="100%">
+					<tbody>
+						<tr>
+							<td bgcolor="#f0f0f0">
+							    <h3 class="formtitle">${i18n.getText("com.atosworldline.jira.plugins.valuesync.error.title")}</h3>
+						    </td>
+						</tr>
+						<tr bgcolor="#ffffff"><td class="jiraformbody" >
+							<p>${i18n.getText("com.atosworldline.jira.plugins.valuesync.error.intro")}</p>	
+							#foreach ($error in $action.getErrorMessages())
+							<p class="notify warn" style="margin:0 40px 0 40px;">
+					    		## ${error} - 
+					    		${i18n.getText("com.atosworldline.jira.plugins.valuesync.error.${error}")}
+							</p>
+					    	#end
+					    	<br/>
+		    			</td></tr>
+			  		</tbody>
+		  		</table>
+	    </td></tr>
+	</table>
+	#else
+		
+	## --------------------------- ##
+	## -- PAGE DE CONFIGURATION -- ##
+	## --------------------------- ##
+    
+    <body>
+    <br/>
+	<form action="${req.contextPath}/secure/EditPluginProperties.jspa" method="POST" id="formAdminPluginValueSync" name="formAdminPluginValueSync">	
+	
+	<table class="jiraform maxWidth">
+	
+	## PARAMETRES DU MODULE #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+	#set ($num = $action.countConfigurations())
+
+	<tr>
+		<td align="right" bgcolor="#fffff0">&nbsp;</td>
+		<td bgcolor="#ffffff">&nbsp;<input type="hidden" name="conf-size" value="$num" class="invisible"></td>
+	</tr>
+	<tr>
+		<td colspan="2" bgcolor="#f0f0f0"><h3 class="formtitle">${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.title")}</h3></td>
+	</tr>
+	#set ($num = 0) ## voir $velocityCount 
+	#foreach ($config in $action.configurations)
+	<tr id="tr1-$num" name="tr1-$num">
+		<td class="fieldLabelArea"> </td>
+		<td><img src="$req.contextPath/images/icons/edit_20.png"  alt="Editer" onClick="doShow($num)"> <img src="$req.contextPath/images/icons/delete2.png" alt="Supprimer" onClick="doDelete($num)"></td>
+	</tr>
+	<tr id="tr2-$num" name="tr2-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.project")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+			#set ($found = false)
+		    #foreach ($project in $action.projects)
+	      	  #if (${project.id.toString()}==$config.project)
+	      	   <div id="visu-project-$num">${project.name}  [${project.key}]</div>
+	      	  #set ($found = true)
+	      	  #end
+	        #end	      
+          #if($found==false) <div id="visu-project-$num">${config.project}</div> #end
+	      <select name="conf-project-$num" id="conf-project-$num" class="select invisible">
+          <option value="ALL" #if ("ALL"==$config.project) selected #end>ALL - ${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.module.all.projet")}</option>
+	      #foreach ($project in $action.projects)
+	      	#if (${project.id.toString()}==$config.project)
+	      	<option value="${project.id}" selected="selected">${project.name} [${project.key}] - ${project.id}</option>
+	      	#else
+	      	<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
+	      	#end
+	      #end
+	      </select>
+		</td>
+	</tr>
+	<tr id="tr3-$num" name="tr3-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.field")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     #set ($found = false)
+		     #foreach (${field} in $action.fields)
+		      	#if ($field==$config.field && $config.field != "")
+		      	 <div id="visu-evenement-$num">${field}</div>
+   	 		     #set ($found = true)
+		      	#end
+		     #end
+		     #if( $found==false) <div id="visu-field-$num">${config.field}</div> #end
+	         <select name="conf-field-$num" id="conf-field-$num" class="select invisible">
+	         #foreach ($field in $action.fields)
+		      	#if (${field}==$config.field)
+		      	<option value="${field}" selected="selected">${field}</option>
+		      	#else
+		      	<option value="${field}">${field}</option>
+		      	#end
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr4-$num" name="tr4-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.operator")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     #set ($found = false)
+		     #foreach (${operator} in $action.operators)
+		      	#if ($operator==$config.operator && $config.operator != "")
+		      	 <div id="visu-evenement-$num">${operator}</div>
+   	 		     #set ($found = true)
+		      	#end
+		     #end
+		     #if( $found==false) <div id="visu-operator-$num">${config.operator}</div> #end
+	         <select name="conf-operator-$num" id="conf-operator-$num" class="select invisible">
+	         #foreach ($operator in $action.operators)
+		      	#if (${operator}==$config.operator)
+		      	<option value="${operator}" selected="selected">${operator}</option>
+		      	#else
+		      	<option value="${operator}">${operator}</option>
+		      	#end
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr5-$num" name="tr5-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.valuetocompare")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     <div id="visu-valuetocompare-$num">$config.valueToCompare</div>
+			<input type="text"
+			class="invisible"
+		       name="conf-valuetocompare-$num" id="conf-valuetocompare-$num"
+		         size="80"
+	         value="${config.valueToCompare}"     />
+		</td>
+	</tr>
+	<tr id="tr6-$num" name="tr6-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.actiontodo")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     #set ($found = false)
+		     #foreach (${actiontodo} in $action.actiontodos)
+		      	#if ($actiontodo==$config.actionToDo && $config.actionToDo != "")
+		      	 <div id="visu-evenement-$num">${actiontodo}</div>
+   	 		     #set ($found = true)
+		      	#end
+		     #end
+		     #if( $found==false) <div id="visu-actiontodo-$num">${config.actionToDo}</div> #end
+	         <select name="conf-actiontodo-$num" id="conf-actiontodo-$num" class="select invisible">
+	         #foreach ($actiontodo in $action.actionToDos)
+		      	#if (${actiontodo}==${config.actionToDo})
+		      		<option value="${actiontodo}" selected="selected">${actiontodo}</option>
+		      	#else
+		      		<option value="${actiontodo}">${actiontodo}</option>
+		      	#end
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr7-$num" name="tr7-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.fieldtoupdate")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     #set ($found = false)
+		     #foreach (${field} in $action.fields)
+		      	#if ($field==$config.fieldToUpdate && $config.fieldToUpdate != "")
+		      	 <div id="visu-evenement-$num">${field}</div>
+   	 		     #set ($found = true)
+		      	#end
+		     #end
+		     #if( $found==false) <div id="visu-fieldtoupdate-$num">${config.fieldToUpdate}</div> #end
+	         <select name="conf-fieldtoupdate-$num" id="conf-fieldtoupdate-$num" class="select invisible">
+	         #foreach ($field in $action.fields)
+		      	#if (${field}==$config.fieldToUpdate)
+		      	<option value="${field}" selected="selected">${field}</option>
+		      	#else
+		      	<option value="${field}">${field}</option>
+		      	#end
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr8-$num" name="tr8-$num">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.updatedfieldvalue")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+		     <div id="visu-updatedfieldvalue-$num">$config.updatedFieldValue</div>
+			<input type="text"
+			class="invisible"
+		       name="conf-updatedfieldvalue-$num" id="conf-updatedfieldvalue-$num"
+		         size="80"
+	         value="${config.updatedFieldValue}"     />
+		</td>
+	</tr>
+	<tr id="tr9-$num" name="tr9-$num">
+		<td align="right" bgcolor="#fffff0">&nbsp;</td>
+		<td bgcolor="#ffffff">&nbsp;</td>
+	</tr>
+	#set ($num = $num+1)
+	#end
+	## -----------------------------------------------------------------------------------------------------------
+	<tr id="tr-add-button" name="tr-add-button">
+		<td class="fieldLabelArea"> </td>
+		<td><img src="$req.contextPath/images/icons/add_20.png"  alt="Editer" onClick="doAdd()"></td>
+	</tr>
+	<tr id="tr-conf-project" name="tr-conf-projet" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.project")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+          <select name="conf-project" id="conf-project" class="select">
+          	<option value="ALL">ALL - Tous les projets</option>
+	      #foreach ($project in $action.projects)
+	      	<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
+	      #end
+	      </select>
+		</td>
+	</tr>
+	<tr id="tr-conf-field" name="tr-conf-field" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.field")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+            <select name="conf-field">
+	         #foreach ($field in $action.fields)
+		      	<option value="${field}">${field}</option>
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr-conf-operator" name="tr-conf-operator" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.operator")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+            <select name="conf-operator">
+	         #foreach ($operator in $action.operators)
+		      	<option value="${operator}">${operator}</option>
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr-conf-valuetocompare" name="tr-conf-valuetocompare" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.valuetocompare")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+			<input type="text"
+		       name="conf-valuetocompare"
+		         size="80"
+	         value=""     />
+		</td>
+	</tr>
+	<tr id="tr-conf-actiontodo" name="tr-conf-actiontodo" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.actiontodo")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+            <select name="conf-actiontodo">
+	         #foreach ($actiontodo in $action.actionToDos)
+		      	<option value="${actiontodo}">${actiontodo}</option>
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr-conf-fieldtoupdate" name="tr-conf-fieldtoupdate" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.fieldtoupdate")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+            <select name="conf-fieldtoupdate">
+	         #foreach ($field in $action.fields)
+		      	<option value="${field}">${field}</option>
+		     #end
+		     </select>
+		</td>
+	</tr>
+	<tr id="tr-conf-updatedfieldvalue" name="tr-conf-updatedfieldvalue" class="invisible">
+		<td class="fieldLabelArea">
+			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.updatedfieldvalue")}:     
+		</td>
+		<td bgcolor="#ffffff" class="fieldValueArea" >
+			<input type="text"
+		       name="conf-updatedfieldvalue"
+		         size="80"
+	         value=""     />
+		</td>
+	</tr>
+	<tr id="tr-blank" name="tr-blank" >
+		<td align="right" bgcolor="#fffff0">&nbsp;</td>
+		<td bgcolor="#ffffff">&nbsp;</td>
+	</tr>
+	
+	## BOUTONS DE VALIDATION/ANNULATION #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+	<tr>
+        <td class="jiraformfooter">&nbsp;</td>
+		<td colspan="1">
+			<input name="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" title="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" value="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" id="edit_property"  class="spaced " type="submit">
+		    <input id="cancelButton" title="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" name="ViewPluginProperties!default.jspa" value="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" onclick="location.href='ViewPluginProperties!default.jspa'" type="button">
+		</td>
+	</tr>
+	
+	</table>
+	
+	## CONFIG A SUPPRIMER #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+	<div class="invisible">
+	<select id="delete-select" name="delete-select" class="invisible" multiple type="hidden">
+	</select>
+	</div>
+	</form>
+	
+	</body>
+	#end
+</html>

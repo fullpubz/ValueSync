@@ -1,0 +1,93 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+    </plugin-info>
+
+    <!-- add our i18n resource -->
+    <resource type="i18n" name="i18n" location="ValueSync"/>
+    
+    <!-- Le fichier interface_label.properties fournit les chaînes
+	de caractères pour une utilisation dans ce fichier  -->
+    <resource name="common-18n" type="i18n" 
+		location="com.atosworldline.jira.plugins.lang.interface_label"/>
+    
+    <!-- add our web resources -->
+    <web-resource key="ValueSync-resources" name="ValueSync Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        
+        <resource type="download" name="ValueSync.css" location="/css/ValueSync.css"/>
+        <resource type="download" name="ValueSync.js" location="/js/ValueSync.js"/>
+        <resource type="download" name="images/" location="/images"/>
+
+        <context>ValueSync</context>
+    </web-resource>
+    
+    <!-- publish our component -->
+    <component key="myPluginComponent" class="com.atosworldline.jira.plugins.MyPluginComponentImpl" public="true">
+        <interface>com.atosworldline.jira.plugins.MyPluginComponent</interface>
+    </component>
+    
+    <!-- import from the product container -->
+    <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties" />
+    
+    
+    <!-- Nouvelle section "Administration AWL" dans le menu "Administration" -->
+    <web-section key="awl-admin-section" 
+                 name="Administration AWL" 
+                 location="admin_plugins_menu" 
+                 weight="116">
+      <description key="com.atosworldline.jira.plugins.valuesync.xml.websection.admin.description"/>
+      <label key="com.atosworldline.jira.plugins.valuesync.xml.websection.admin.label"/>
+    </web-section> 
+
+
+    <!-- Nouveau lien "ValueSync" dans la section "Administration AWL" 
+    	 vers la page de paramètrage du plugin -->
+    <web-item key="com.atosworldline.jira.plugins.valuesync.webitem.administration" 
+              name="Plugin AWL"
+		      section="admin_plugins_menu/awl-admin-section" 
+              weight="10">
+      <description key="com.atosworldline.jira.plugins.valuesync.xml.webitem.admin.description"/>
+      <label key="com.atosworldline.jira.plugins.valuesync.xml.webitem.admin.label"/>
+      <link>/secure/ViewPluginProperties!default.jspa</link>
+      <condition class="com.atlassian.jira.plugin.webfragment.conditions.JiraGlobalPermissionCondition">
+		<param name="permission">admin</param>
+      </condition>
+      <condition class="com.atlassian.jira.plugin.webfragment.conditions.UserLoggedInCondition"></condition>
+      <tooltip key="com.atosworldline.jira.plugins.valuesync.xml.webitem.admin.tooltip"/>
+    </web-item>
+    
+
+    
+    <!-- Le plugin webwork1 permet d'ajouter de nouvelles actions à JIRA -->
+	<webwork1 key="com.atosworldline.jira.plugins.valuesync.webwork" 
+		name="Value Sync"
+		class="java.lang.Object"
+		roles-required="admin"
+	>
+    	<description key="com.atosworldline.jira.plugins.valuesync.xml.webwork.description" />
+    	<!-- Langues -->
+    	<resource type="i18n" name="i18n" location="com.atosworldline.jira.plugins.lang.interface_label" />
+		<!-- Ces actions utilisent des templates velocity puisqu'ils peuvent être
+			déployés directement dans le plugin. -->
+    	<actions>	
+	        
+            <action name="com.atosworldline.jira.plugins.valuesync.webwork.AdminViewValueSyncPlugin" 
+            		alias="ViewPluginProperties" roles-required="admin">
+	          <view name="input">/com/atosworldline/jira/plugins/templates/webwork/view-admin-plugin.vm</view>
+	          <view name="success">/com/atosworldline/jira/plugins/templates/webwork/view-admin-plugin.vm</view>
+	        </action>
+	        
+	        <action name="com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPlugin" 
+            		alias="EditPluginProperties" roles-required="admin">
+	          <view name="input">/com/atosworldline/jira/plugins/templates/webwork/edit-admin-plugin.vm</view>
+   	          <view name="success">ViewPluginProperties!default.jspa</view>	          
+	        </action>
+			
+     	</actions>
+	</webwork1>
+</atlassian-plugin>

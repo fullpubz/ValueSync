@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.project.Project;
@@ -29,14 +30,30 @@ public class Utils {
 		String field = configuration.getField();
 		String valueToCompare = configuration.getValueToCompare();
 		String operator = configuration.getOperator();
+		Boolean compareOK = false;
 		
-		// type TIMESTAMP (voir
-		// https://developer.atlassian.com/static/javadoc/jira/5.1.8/reference/com/atlassian/jira/issue/Issue.html
-		// pour connaitre les types retournÃ©s
-		if (CompareTimestamp(issue, field, valueToCompare, operator)) {
-			Method method = getUtilsMethodByString(configuration.getActionToDo());	
+		// On récupère le type du champ
+		Method method = getMutableIssueMethodByString("get", getMethodName(field));
+		Object obj = getFieldValue(issue, method);
+		
+		try {
+			if (obj instanceof Timestamp && getTimestampValue(valueToCompare) != null) {
+				if (CompareWithOperator(operator, (Timestamp) obj, getTimestampValue(valueToCompare))) {
+					compareOK = true;
+				}
+			} else if (obj instanceof String) {
+				if (CompareWithOperator(operator, (String) obj, valueToCompare)) {
+					compareOK = true;
+				}
+			}
+		} catch(Exception e) {
+			log.warn("[CompareValues] Exception : " + e.getMessage());
+		}
+		
+		if (compareOK) {
+			Method methodActionToDo = getUtilsMethodByString(configuration.getActionToDo());	
 			try {
-				method.invoke(this, issue, configuration.getFieldToUpdate(), configuration.getUpdatedFieldValue());
+				methodActionToDo.invoke(this, issue, configuration.getFieldToUpdate(), configuration.getUpdatedFieldValue());
 			} catch (Exception e) {
 				log.warn("[CompareValues] Exception : " + e.getMessage());
 			}
@@ -47,41 +64,31 @@ public class Utils {
 	/*
 	 * Compare 2 Timestamp
 	 */
-	public Boolean CompareTimestamp(MutableIssue issue, String field,
-			String valueToCompare, String operator) {
-		// pour ajouter un champ, il suffit de rajouter '&&
-		// configuration.getField() == nomDuChamp'
-		if (field.equals("DueDate")) {
-			Method method = getMutableIssueMethodByString("get", field);
-			Timestamp value = (Timestamp) getFieldValue(issue, method);
-			Timestamp timestampValueToCompare = null;
-			if (valueToCompare.equals("now") || valueToCompare.equals("NOW")) {
-				Date date = new Date();
-				timestampValueToCompare = new Timestamp(date.getTime());
-			} else {
-				try {
-					SimpleDateFormat dateFormat = new SimpleDateFormat(
-							"yyyy-MM-dd");
-					Date parsedDate = dateFormat.parse(valueToCompare);
-					timestampValueToCompare = new Timestamp(
-							parsedDate.getTime());
-				} catch (Exception e) {
-					log.warn("[executeConfiguration] La valeur saisie dans le champ Valeur Ã  comparer n'est pas un Timestamp");
-				}
+	public Timestamp getTimestampValue(String valueToCompare) {
+		// on regarde si on a mis un mot clé dans l'input, sinon on cast juste la date en timestamp
+		Timestamp timestampValueToCompare = null;
+		if (valueToCompare.equals("now") || valueToCompare.equals("NOW")) {
+			Date date = new Date();
+			timestampValueToCompare = new Timestamp(date.getTime());
+		} else {
+			try {
+				SimpleDateFormat dateFormat = new SimpleDateFormat(
+						"yyyy-MM-dd");
+				Date parsedDate = dateFormat.parse(valueToCompare);
+				timestampValueToCompare = new Timestamp(
+						parsedDate.getTime());
+			} catch (Exception e) {
+				log.warn("[executeConfiguration] La valeur saisie dans le champ Valeur à comparer n'est pas un Timestamp");
 			}
-			if (timestampValueToCompare != null)
-				return Compare(operator, value, timestampValueToCompare);
-			else
-				return false;
 		}
-		return false;
+		return timestampValueToCompare;
 	}
 
 	/*
 	 * Méthode pour comparer 2 valeurs (ici 2 Timestamp)
 	 * A surcharger en fonction des besoins
 	 */
-	public Boolean Compare(String operator, Timestamp field,
+	public Boolean CompareWithOperator(String operator, Timestamp field,
 			Timestamp valueToCompare) {
 		if (operator.equals("<")) {
 			return field.before(valueToCompare);
@@ -94,30 +101,21 @@ public class Utils {
 		}
 	}
 	
-	/*
-	 * Methode appelée par le service, elle teste le champ a odifier et appelle la méthode correspondant du type de donnée
-	 * Si on souhaite rajouter des champ pris en charge par le plugin, c'est ici,
-	 * il suffit de connaitre le type du champs (Status, Timestamp, String...) et d'ajouter le libellé du champ dans le if correspondant
-	 * 
-	 * Si le type n'est pas encore pris en charge, rajouter un if et écrire la méthode correspondante en se basant sur celles deja existantes
-	 */
-	public void ModifyFieldValue(MutableIssue issue, String field,
-			String value) {
-		Method method = null;
-		
-		// champs de type Status
-		if (field.equals("StatusObject")) {
-			ModifyStatusValue(issue, field, value);
-			
-		// champs de type String
-		} else if (field.equals("Description")) {
-			ModifyStringValue(issue, field, value);
+	public Boolean CompareWithOperator(String operator, String field,
+			String valueToCompare) {
+		log.warn("[CompareWithOperator]" + field + valueToCompare + field.equals(valueToCompare));
+		if (operator.equals("=") || operator.contains("=")) {
+			return field.equals(valueToCompare);
+		} else if (operator.equals("!=")) {
+			return !field.equals(valueToCompare);
+		} else {
+			return false;
 		}
 	}
 	
-	public void ModifyStringValue(MutableIssue issue, String field,
+	public void ModifyFieldValue(MutableIssue issue, String field,
 			String value) {
-		Method method = getMutableIssueMethodByString("set", field, String.class);
+			Method method = getMutableIssueMethodByString("set", getMethodName(field), String.class);
 		
 		if (method != null) {
 			try {
@@ -133,18 +131,46 @@ public class Utils {
 	 * Pour modifier la valeur du status (état) de l'issue
 	 */
 	public void ModifyStatusValue(MutableIssue issue, String field,
-			String value) {		
+			String value) {	
+		IssueManager issueManager = ComponentAccessor.getIssueManager();
+		User user = getUser("admin");
+		
 		WorkflowManager workflowManager = (WorkflowManager) ComponentAccessor
 				.getOSGiComponentInstanceOfType(WorkflowManager.class);
 		JiraWorkflow workflow = workflowManager.getWorkflow(issue);
-		
 		List<Status> statuss = workflow.getLinkedStatusObjects();
-		
 		for (Status status : statuss) {
 			if (status.getName().equals(value)) {
 				try {
-					issue.setStatusId(status.getId());
+					issue.setStatusObject(status);
 					issue.store();
+					//issueManager.updateIssue(user, issue, EventDispatchOption.ISSUE_UPDATED, false);
+
+					// test
+//					WorkflowTransitionUtil workflowTransitionUtil = (WorkflowTransitionUtil) JiraUtils.loadComponent(WorkflowTransitionUtilImpl.class);
+//					workflowTransitionUtil.setIssue(issue);
+//					workflowTransitionUtil.setUsername(user.getName());
+//					workflowTransitionUtil.setAction(2);
+//					workflowTransitionUtil.progress();
+//					log.warn("[ModifyStatusValue] OK");
+					
+//					boolean result = false;
+//				    IssueService issueService = ComponentAccessor.getIssueService();
+//				    IssueService.IssueResult transResult;
+//				    int actionId = 4;
+//				     
+//				    IssueInputParameters issueInputParameters = new IssueInputParametersImpl();
+//				     
+//				    TransitionValidationResult validationResult = issueService.validateTransition(user, issue.getId(), actionId, issueInputParameters);
+//				    log.warn("[ModifyStatusValue] result --> " + validationResult.getErrorCollection().toString());
+//				    result = validationResult.isValid(); 
+//				    if (result) {
+//				        transResult = issueService.transition(user, validationResult);
+//				        log.warn("[ModifyStatusValue] result ok");
+//				    } else {
+//				    	log.warn("[ModifyStatusValue] Result pas ok");
+//				    }
+					// test
 				} catch (Exception e) {
 					log.warn("[ModifyStatusValue] Exception -> " + e.getMessage());
 				}
@@ -243,5 +269,12 @@ public class Utils {
 			log.warn("[getUser] Le user avec le nom " + name + " n'existe pas");
 			return null;
 		}
+	}
+	
+	/*
+	 * Envlève les espaces et / dans le nom du champ
+	 */
+	public String getMethodName(String fieldName) {
+		return fieldName.replace(" ", "").replace("/", "");
 	}
 }

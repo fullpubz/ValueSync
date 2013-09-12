@@ -8,6 +8,9 @@ import java.util.Map;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.event.type.EventTypeManager;
+import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.IssueManager;
+import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.security.JiraAuthenticationContext;
@@ -277,6 +280,23 @@ public class AdminEditValueSyncPlugin extends JiraWebActionSupport {
 		return id;
 	}
 
+	public List<String> getIssueFieldsFromProjectId() {
+		List<String> issueFields = new ArrayList<String>();
+//		try {
+//			IssueManager issueManager = ComponentAccessor.getOSGiComponentInstanceOfType(IssueManager.class);
+//			List<Long> issueIds = (List<Long>) issueManager.getIssueIdsForProject(projectId);
+//			List<Issue> issues = issueManager.getIssueObjects(issueIds);
+//			
+//			for(Issue issue : issues) {
+				issueFields.add("test");
+//			}
+//			log.warn("[getIssueFieldsFromProjectId]");							
+//		} catch (Exception e) {
+//			log.warn("[executeConfiguration] " + e.getMessage());
+//		}
+		return issueFields;
+	}
+	
 	public List<String> getFields() {
 		List<String> fields = new ArrayList<String>();
 		fields.add("DueDate");
@@ -290,6 +310,7 @@ public class AdminEditValueSyncPlugin extends JiraWebActionSupport {
 		operators.add("<");
 		operators.add(">");
 		operators.add("=");
+		operators.add("!=");
 		return operators;
 	}
 
@@ -297,6 +318,7 @@ public class AdminEditValueSyncPlugin extends JiraWebActionSupport {
 	public List<String> getActionToDos() {
 		List<String> actiontodos = new ArrayList<String>();
 		actiontodos.add("ModifyFieldValue");
+		actiontodos.add("ModifyStatusValue");
 		return actiontodos;
 	}
 }

@@ -90,4 +90,13 @@
 			
      	</actions>
 	</webwork1>
+	
+	<servlet name="Hello World Servlet" key="helloWorld" class="com.atosworldline.jira.plugins.valuesync.webwork.EditPluginServlet">
+        <description>Says Hello World, Australia or your name.</description>
+        <url-pattern>/editplugin</url-pattern>
+        <init-param>
+            <param-name>defaultName</param-name>
+            <param-value>Australia</param-value>
+        </init-param>
+    </servlet>
 </atlassian-plugin>

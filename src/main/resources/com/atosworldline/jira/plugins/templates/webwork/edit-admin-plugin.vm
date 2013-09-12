@@ -10,8 +10,8 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 <html>
     <head>
         <title>${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.title")}</title>
-        <meta content="admin" name="decorator" />
-        <script>
+        <meta content="admin" name="decorator" />	
+		<script>
         function getDiv(id){
 			return document.getElementById(id);
 	    }
@@ -73,6 +73,77 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			showTr("tr-conf-updatedfieldvalue");		
 			showTr("tr-conf-actiontodo");
 		}
+			
+		function callServlet(variable, donnees, variable2, donnees2) {
+			if (variable2 != "") {
+				var url = "/jira/plugins/servlet/editplugin?" + variable + "=" + escape(donnees) + "&"  + variable2 + "=" + escape(donnees2);
+			} else if (variable != "") {
+				var url = "/jira/plugins/servlet/editplugin?" + variable + "=" + escape(donnees);
+			} else {
+				var url = "/jira/plugins/servlet/editplugin";
+			}
+			
+			if (window.XMLHttpRequest) {
+				requete = new XMLHttpRequest();
+			} else if (window.ActiveXObject) {
+			    requete = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			requete.open("GET", url, true);
+		}
+		
+		function loadFields() {
+			var confproject;
+				confproject = document.getElementById("conf-project");
+			var donnees = confproject.options[confproject.selectedIndex].value;
+			callServlet("projectId", donnees);
+			requete.onreadystatechange = loadFieldsHtml;
+			requete.send(null);
+		}
+			
+		function loadFieldsHtml() {
+			var message = "";				
+			if (requete.readyState == 4) {
+				if (requete.status == 200) {
+					var conffield;
+
+	    			conffield = document.getElementById("conf-field");
+
+	    			conffield.options.length = 0;
+	
+				    var messageTag = requete.responseXML.getElementsByTagName("fields")[0].getElementsByTagName("field");
+				    for (i = 0; i < messageTag.length; i++) {
+				    	message = messageTag[i].childNodes[0].nodeValue;
+				    	conffield.options[conffield.options.length] = new Option(message, message);
+				    }
+				}
+			}
+		}
+		
+		function loadFieldsToUpdate() {
+			var confactiontodo = document.getElementById("conf-actiontodo");
+			var donnees = confactiontodo.options[confactiontodo.selectedIndex].value;
+			var confproject = document.getElementById("conf-project");
+			var donnees2 = confproject.options[confproject.selectedIndex].value;
+			callServlet("projectId", donnees2, "actionToDo", donnees);
+			requete.onreadystatechange = loadFieldsToUpdateHtml;
+			requete.send(null);
+		}
+		
+		function loadFieldsToUpdateHtml() {
+			var message = "";				
+			if (requete.readyState == 4) {
+				if (requete.status == 200) {
+	    			var conffieldtoupdate = document.getElementById("conf-fieldtoupdate");
+	    			conffieldtoupdate.options.length = 0;
+				    var messageTag = requete.responseXML.getElementsByTagName("fields")[0].getElementsByTagName("field");
+				    for (i = 0; i < messageTag.length; i++) {
+				    	message = messageTag[i].childNodes[0].nodeValue;
+				    	conffieldtoupdate.options[conffieldtoupdate.options.length] = new Option(message, message);
+				    }
+				}
+			}
+		}
+		
 		</script>
 		<style>
 		.invisible{
@@ -123,7 +194,7 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
     <body>
     <br/>
 	<form action="${req.contextPath}/secure/EditPluginProperties.jspa" method="POST" id="formAdminPluginValueSync" name="formAdminPluginValueSync">	
-	
+	##include("/com/atosworldline/jira/plugins/templates/webwork/EditPlugin.jsp")
 	<table class="jiraform maxWidth">
 	
 	## PARAMETRES DU MODULE #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
@@ -155,8 +226,7 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 	      	  #end
 	        #end	      
           #if($found==false) <div id="visu-project-$num">${config.project}</div> #end
-	      <select name="conf-project-$num" id="conf-project-$num" class="select invisible">
-          <option value="ALL" #if ("ALL"==$config.project) selected #end>ALL - ${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.module.all.projet")}</option>
+	      <select name="conf-project-$num" id="conf-project-$num" class="select invisible" onchange="loadFields($num)">
 	      #foreach ($project in $action.projects)
 	      	#if (${project.id.toString()}==$config.project)
 	      	<option value="${project.id}" selected="selected">${project.name} [${project.key}] - ${project.id}</option>
@@ -305,10 +375,10 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.project")}:     
 		</td>
 		<td bgcolor="#ffffff" class="fieldValueArea" >
-          <select name="conf-project" id="conf-project" class="select">
-          	<option value="ALL">ALL - Tous les projets</option>
+          <select name="conf-project" id="conf-project" class="select" onchange="loadFields()">
+          	<option value="0">Selectionnez un projet</option>
 	      #foreach ($project in $action.projects)
-	      	<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
+	      	#<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
 	      #end
 	      </select>
 		</td>
@@ -318,10 +388,10 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.field")}:     
 		</td>
 		<td bgcolor="#ffffff" class="fieldValueArea" >
-            <select name="conf-field">
-	         #foreach ($field in $action.fields)
-		      	<option value="${field}">${field}</option>
-		     #end
+            <select name="conf-field" id="conf-field">
+	         ##foreach ($field in $action.fields)
+		      	##<option value="${field}">${field}</option>
+		     ##end
 		     </select>
 		</td>
 	</tr>
@@ -353,7 +423,8 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.actiontodo")}:     
 		</td>
 		<td bgcolor="#ffffff" class="fieldValueArea" >
-            <select name="conf-actiontodo">
+            <select name="conf-actiontodo" id="conf-actiontodo" onchange="loadFieldsToUpdate()">
+            <option value="0">Selectionnez une action</option>
 	         #foreach ($actiontodo in $action.actionToDos)
 		      	<option value="${actiontodo}">${actiontodo}</option>
 		     #end
@@ -365,10 +436,10 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.view.module.fieldtoupdate")}:     
 		</td>
 		<td bgcolor="#ffffff" class="fieldValueArea" >
-            <select name="conf-fieldtoupdate">
-	         #foreach ($field in $action.fields)
-		      	<option value="${field}">${field}</option>
-		     #end
+            <select name="conf-fieldtoupdate" id="conf-fieldtoupdate">
+	         ##foreach ($field in $action.fields)
+		      	##<option value="${field}">${field}</option>
+		     ##end
 		     </select>
 		</td>
 	</tr>

@@ -45,11 +45,9 @@ public class ValueSyncService extends AbstractService {
 			try {
 				List<Long> issueIds = (List<Long>) issueManager
 						.getIssueIdsForProject(project.getId());
-
 				if (!issueIds.isEmpty()) {
 					for (Long issueId : issueIds) {
-						MutableIssue issue = issueManager
-								.getIssueObject(issueId);					
+						MutableIssue issue = issueManager.getIssueObject(issueId);
 						utils.CompareValues(issue, configuration);
 						log.warn("[executeConfiguration] Service ValueSync execute");							
 					}

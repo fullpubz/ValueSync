@@ -9,16 +9,29 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.User;
+import com.atlassian.jira.bc.issue.IssueService;
+import com.atlassian.jira.bc.issue.IssueService.IssueResult;
+import com.atlassian.jira.bc.issue.IssueService.TransitionValidationResult;
+import com.atlassian.jira.bc.issue.IssueService.UpdateValidationResult;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.IssueInputParameters;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.user.util.UserManager;
+import com.atlassian.jira.util.ErrorCollection.Reason;
+import com.atlassian.jira.util.ImportUtils;
+import com.atlassian.jira.util.JiraUtils;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.WorkflowManager;
+import com.atlassian.jira.workflow.WorkflowTransitionUtil;
+import com.atlassian.jira.workflow.WorkflowTransitionUtilImpl;
 import com.atosworldline.jira.plugins.valuesync.component.configuration.Configuration;
+import com.opensymphony.util.TextUtils;
+import com.opensymphony.workflow.loader.ActionDescriptor;
+import com.opensymphony.workflow.loader.StepDescriptor;
 
 public class Utils {
 	private Logger log = Logger.getLogger(Utils.class);
@@ -142,35 +155,19 @@ public class Utils {
 		for (Status status : statuss) {
 			if (status.getName().equals(value)) {
 				try {
-					issue.setStatusObject(status);
-					issue.store();
-					//issueManager.updateIssue(user, issue, EventDispatchOption.ISSUE_UPDATED, false);
-
-					// test
-//					WorkflowTransitionUtil workflowTransitionUtil = (WorkflowTransitionUtil) JiraUtils.loadComponent(WorkflowTransitionUtilImpl.class);
-//					workflowTransitionUtil.setIssue(issue);
-//					workflowTransitionUtil.setUsername(user.getName());
-//					workflowTransitionUtil.setAction(2);
-//					workflowTransitionUtil.progress();
-//					log.warn("[ModifyStatusValue] OK");
+					boolean wasIndexing = ImportUtils.isIndexIssues();
+					ImportUtils.setIndexIssues( true );
+					 
+					WorkflowTransitionUtil workflowTransitionUtil = ( WorkflowTransitionUtil ) JiraUtils.loadComponent( WorkflowTransitionUtilImpl.class );
+					workflowTransitionUtil.setIssue( issue );
+					workflowTransitionUtil.setUsername( "admin" );
+					workflowTransitionUtil.setAction(2);
 					
-//					boolean result = false;
-//				    IssueService issueService = ComponentAccessor.getIssueService();
-//				    IssueService.IssueResult transResult;
-//				    int actionId = 4;
-//				     
-//				    IssueInputParameters issueInputParameters = new IssueInputParametersImpl();
-//				     
-//				    TransitionValidationResult validationResult = issueService.validateTransition(user, issue.getId(), actionId, issueInputParameters);
-//				    log.warn("[ModifyStatusValue] result --> " + validationResult.getErrorCollection().toString());
-//				    result = validationResult.isValid(); 
-//				    if (result) {
-//				        transResult = issueService.transition(user, validationResult);
-//				        log.warn("[ModifyStatusValue] result ok");
-//				    } else {
-//				    	log.warn("[ModifyStatusValue] Result pas ok");
-//				    }
-					// test
+					workflowTransitionUtil.validate();
+					workflowTransitionUtil.progress();
+					 
+					ImportUtils.setIndexIssues( wasIndexing );
+					
 				} catch (Exception e) {
 					log.warn("[ModifyStatusValue] Exception -> " + e.getMessage());
 				}

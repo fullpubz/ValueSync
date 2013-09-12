@@ -91,23 +91,30 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			requete.open("GET", url, true);
 		}
 		
-		function loadFields() {
+		function loadFields(num) {
+			num = typeof num !== 'undefined' ? num : 'no';
 			var confproject;
+			if (num == 'no') {
 				confproject = document.getElementById("conf-project");
+			} else {
+				confproject = document.getElementById("conf-project-"+num);
+			}
 			var donnees = confproject.options[confproject.selectedIndex].value;
 			callServlet("projectId", donnees);
-			requete.onreadystatechange = loadFieldsHtml;
+			requete.onreadystatechange = function(){loadFieldsHtml(num);};
 			requete.send(null);
 		}
 			
-		function loadFieldsHtml() {
+		function loadFieldsHtml(num) {
 			var message = "";				
 			if (requete.readyState == 4) {
 				if (requete.status == 200) {
 					var conffield;
-
-	    			conffield = document.getElementById("conf-field");
-
+					if (num == 'no') {
+	    				conffield = document.getElementById("conf-field");
+					} else {
+						conffield = document.getElementById("conf-field-"+num);
+					}										
 	    			conffield.options.length = 0;
 	
 				    var messageTag = requete.responseXML.getElementsByTagName("fields")[0].getElementsByTagName("field");
@@ -119,21 +126,37 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 			}
 		}
 		
-		function loadFieldsToUpdate() {
-			var confactiontodo = document.getElementById("conf-actiontodo");
+		function loadFieldsToUpdate(num) {
+			num = typeof num !== 'undefined' ? num : 'no';
+			var confactiontodo;
+			if (num == 'no') {
+				confactiontodo = document.getElementById("conf-actiontodo");
+			} else {
+				confactiontodo = document.getElementById("conf-actiontodo-"+num);
+			}
 			var donnees = confactiontodo.options[confactiontodo.selectedIndex].value;
-			var confproject = document.getElementById("conf-project");
+			var confproject;
+			if (num == 'no') {
+				confproject = document.getElementById("conf-project");
+			} else {
+				confproject = document.getElementById("conf-project-"+num);
+			}
 			var donnees2 = confproject.options[confproject.selectedIndex].value;
 			callServlet("projectId", donnees2, "actionToDo", donnees);
-			requete.onreadystatechange = loadFieldsToUpdateHtml;
+			requete.onreadystatechange = function(){loadFieldsToUpdateHtml(num);};
 			requete.send(null);
 		}
 		
-		function loadFieldsToUpdateHtml() {
+		function loadFieldsToUpdateHtml(num) {
 			var message = "";				
 			if (requete.readyState == 4) {
 				if (requete.status == 200) {
-	    			var conffieldtoupdate = document.getElementById("conf-fieldtoupdate");
+	    			var conffieldtoupdate;
+	    			if (num == 'no') {
+	    				conffieldtoupdate = document.getElementById("conf-fieldtoupdate");
+	    			} else {
+	    				conffieldtoupdate = document.getElementById("conf-fieldtoupdate-"+num);
+	    			}
 	    			conffieldtoupdate.options.length = 0;
 				    var messageTag = requete.responseXML.getElementsByTagName("fields")[0].getElementsByTagName("field");
 				    for (i = 0; i < messageTag.length; i++) {
@@ -227,13 +250,14 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 	        #end	      
           #if($found==false) <div id="visu-project-$num">${config.project}</div> #end
 	      <select name="conf-project-$num" id="conf-project-$num" class="select invisible" onchange="loadFields($num)">
-	      #foreach ($project in $action.projects)
-	      	#if (${project.id.toString()}==$config.project)
-	      	<option value="${project.id}" selected="selected">${project.name} [${project.key}] - ${project.id}</option>
-	      	#else
-	      	<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
-	      	#end
-	      #end
+	      	<option value="0">Selectionnez un projet</option>
+		      #foreach ($project in $action.projects)
+		      	#if (${project.id.toString()}==$config.project)
+		      	<option value="${project.id}" selected="selected">${project.name} [${project.key}] - ${project.id}</option>
+		      	#else
+		      	<option value="${project.id}">${project.name} [${project.key}] - ${project.id}</option>
+		      	#end
+		      #end
 	      </select>
 		</td>
 	</tr>
@@ -251,13 +275,6 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 		     #end
 		     #if( $found==false) <div id="visu-field-$num">${config.field}</div> #end
 	         <select name="conf-field-$num" id="conf-field-$num" class="select invisible">
-	         #foreach ($field in $action.fields)
-		      	#if (${field}==$config.field)
-		      	<option value="${field}" selected="selected">${field}</option>
-		      	#else
-		      	<option value="${field}">${field}</option>
-		      	#end
-		     #end
 		     </select>
 		</td>
 	</tr>
@@ -311,7 +328,7 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 		      	#end
 		     #end
 		     #if( $found==false) <div id="visu-actiontodo-$num">${config.actionToDo}</div> #end
-	         <select name="conf-actiontodo-$num" id="conf-actiontodo-$num" class="select invisible">
+	         <select name="conf-actiontodo-$num" id="conf-actiontodo-$num" class="select invisible" onchange="loadFieldsToUpdate($num)">
 	         #foreach ($actiontodo in $action.actionToDos)
 		      	#if (${actiontodo}==${config.actionToDo})
 		      		<option value="${actiontodo}" selected="selected">${actiontodo}</option>
@@ -336,13 +353,6 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
 		     #end
 		     #if( $found==false) <div id="visu-fieldtoupdate-$num">${config.fieldToUpdate}</div> #end
 	         <select name="conf-fieldtoupdate-$num" id="conf-fieldtoupdate-$num" class="select invisible">
-	         #foreach ($field in $action.fields)
-		      	#if (${field}==$config.fieldToUpdate)
-		      	<option value="${field}" selected="selected">${field}</option>
-		      	#else
-		      	<option value="${field}">${field}</option>
-		      	#end
-		     #end
 		     </select>
 		</td>
 	</tr>

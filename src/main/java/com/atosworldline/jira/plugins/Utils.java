@@ -152,16 +152,17 @@ public class Utils {
 				.getOSGiComponentInstanceOfType(WorkflowManager.class);
 		JiraWorkflow workflow = workflowManager.getWorkflow(issue);
 		List<Status> statuss = workflow.getLinkedStatusObjects();
-		for (Status status : statuss) {
-			if (status.getName().equals(value)) {
+		
+		for (ActionDescriptor actionDescriptor : workflow.getAllActions()) {
+			if (actionDescriptor.getName().equals(value)) {
 				try {
 					boolean wasIndexing = ImportUtils.isIndexIssues();
 					ImportUtils.setIndexIssues( true );
 					 
 					WorkflowTransitionUtil workflowTransitionUtil = ( WorkflowTransitionUtil ) JiraUtils.loadComponent( WorkflowTransitionUtilImpl.class );
 					workflowTransitionUtil.setIssue( issue );
-					workflowTransitionUtil.setUsername( "admin" );
-					workflowTransitionUtil.setAction(2);
+					workflowTransitionUtil.setUsername("admin");
+					workflowTransitionUtil.setAction(actionDescriptor.getId());
 					
 					workflowTransitionUtil.validate();
 					workflowTransitionUtil.progress();

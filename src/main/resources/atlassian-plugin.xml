@@ -53,7 +53,7 @@
               weight="10">
       <description key="com.atosworldline.jira.plugins.valuesync.xml.webitem.admin.description"/>
       <label key="com.atosworldline.jira.plugins.valuesync.xml.webitem.admin.label"/>
-      <link>/secure/ViewPluginProperties!default.jspa</link>
+      <link>/secure/ViewPluginValueSyncProperties!default.jspa</link>
       <condition class="com.atlassian.jira.plugin.webfragment.conditions.JiraGlobalPermissionCondition">
 		<param name="permission">admin</param>
       </condition>
@@ -77,13 +77,13 @@
     	<actions>	
 	        
             <action name="com.atosworldline.jira.plugins.valuesync.webwork.AdminViewValueSyncPlugin" 
-            		alias="ViewPluginProperties" roles-required="admin">
+            		alias="ViewPluginValueSyncProperties" roles-required="admin">
 	          <view name="input">/com/atosworldline/jira/plugins/templates/webwork/view-admin-plugin.vm</view>
 	          <view name="success">/com/atosworldline/jira/plugins/templates/webwork/view-admin-plugin.vm</view>
 	        </action>
 	        
 	        <action name="com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPlugin" 
-            		alias="EditPluginProperties" roles-required="admin">
+            		alias="EditPluginValueSyncProperties" roles-required="admin">
 	          <view name="input">/com/atosworldline/jira/plugins/templates/webwork/edit-admin-plugin.vm</view>
    	          <view name="success">ViewPluginProperties!default.jspa</view>	          
 	        </action>
@@ -91,12 +91,8 @@
      	</actions>
 	</webwork1>
 	
-	<servlet name="Hello World Servlet" key="helloWorld" class="com.atosworldline.jira.plugins.valuesync.webwork.EditPluginServlet">
-        <description>Says Hello World, Australia or your name.</description>
+	<servlet name="EditPluginServlet" key="editPluginServlet" class="com.atosworldline.jira.plugins.valuesync.webwork.EditPluginServlet">
+        <description>EditPluginServlet</description>
         <url-pattern>/editplugin</url-pattern>
-        <init-param>
-            <param-name>defaultName</param-name>
-            <param-value>Australia</param-value>
-        </init-param>
     </servlet>
 </atlassian-plugin>

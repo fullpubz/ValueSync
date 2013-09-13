@@ -474,7 +474,7 @@ $action = "com.atosworldline.jira.plugins.valuesync.webwork.AdminEditValueSyncPl
         <td class="jiraformfooter">&nbsp;</td>
 		<td colspan="1">
 			<input name="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" title="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" value="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.update")}" id="edit_property"  class="spaced " type="submit">
-		    <input id="cancelButton" title="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" name="ViewPluginProperties!default.jspa" value="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" onclick="location.href='ViewPluginProperties!default.jspa'" type="button">
+		    <input id="cancelButton" title="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" name="ViewPluginValueSyncProperties!default.jspa" value="${i18n.getText("com.atosworldline.jira.plugins.valuesync.admin.edit.button.cancel")}" onclick="location.href='ViewPluginValueSyncProperties!default.jspa'" type="button">
 		</td>
 	</tr>
 	
